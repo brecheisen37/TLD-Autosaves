@@ -19,5 +19,10 @@ There are options for triggering saves when you wound an animal, a predator star
 
 ## Changelog
 
+### 0.3.0
+ - added attack saves with filters
+ - added separate option for load aggro
+ - made load aggro affect moose
+
 ### 0.2.0
 - Public Beta
