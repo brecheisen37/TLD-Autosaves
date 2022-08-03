@@ -1,4 +1,4 @@
-# TLD-RestMax
+# TLD-AutoSave
 
 ## IMPORTANT WARNING
 ### Depending on your PC saving may slow the game down momentarily.
@@ -18,6 +18,10 @@ There's an option to save when a blizzard starts.
 There are options for triggering saves when you wound an animal, a predator starts pursuing you, or specific animals become aware of you.
 
 ## Changelog
+### 1.0.0
+ - full release
+ - added quicksaves
+ - added exit saves and options for skipping saves indoors
 
 ### 0.3.0
  - added attack saves with filters
