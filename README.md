@@ -18,15 +18,5 @@ There's an option to save when a blizzard starts.
 There are options for triggering saves when you wound an animal, a predator starts pursuing you, or specific animals become aware of you.
 
 ## Changelog
-### 1.0.0
+### 1.0.1
  - full release
- - added quicksaves
- - added exit saves and options for skipping saves indoors
-
-### 0.3.0
- - added attack saves with filters
- - added separate option for load aggro
- - made load aggro affect moose
-
-### 0.2.0
-- Public Beta
