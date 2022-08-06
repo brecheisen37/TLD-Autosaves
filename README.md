@@ -18,5 +18,8 @@ There's an option to save when a blizzard starts.
 There are options for triggering saves when you wound an animal, a predator starts pursuing you, or specific animals become aware of you.
 
 ## Changelog
+### 1.1.0
+ - larger range of periodic save seconds slider
+ - rewrote only outside options for periodic saves and exit saves
 ### 1.0.1
  - full release
