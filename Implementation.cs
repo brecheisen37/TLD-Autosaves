@@ -10,12 +10,6 @@ using UnityEngine;
 
 namespace More_Autosaves
 {
-    public class PatchClass
-    {
-
-
-    }
-
     public class Implementation : MelonMod
     {
         public override void OnApplicationLateStart()
@@ -28,28 +22,59 @@ namespace More_Autosaves
         public override void OnApplicationStart()
         {
             Settings.OnLoad();
-            HarmonyInstance.PatchAll();
         }
-
-
-        public override void OnSceneWasInitialized(int level, string name) // finished loading scene
-        {
-
-            
-        }
-
         static float saveperiod = 0;
         public static void UpdateSavePeriod()
         {
                 if (Settings.options.EnableMod && Settings.options.TimeSave) saveperiod = Settings.options.Minutes * 60 + Settings.options.Seconds;
                 if (saveperiod < 5) saveperiod = 5;
         }
+
+        static float delay = 3;
+        static bool waitingforsave = false;
+        public static void DelaySeconds(float seconds)
+        {
+            delay = seconds;
+            waitingforsave = true;
+        }
+
+        void UpdateforDelaySeconds()
+        {
+            if (waitingforsave)
+            {
+                delay -= Time.deltaTime;
+                if (delay <= 0)
+                {
+                    waitingforsave = false;
+                    Save();
+                }
+            }
+
+        }
+
+        public static bool ShouldSaveGameonQuit()
+        {
+            if (Settings.options.EnableMod && Settings.options.ExitSave)
+            {
+                if (Settings.options.xinExitSave && GameManager.GetWeatherComponent() != null && GameManager.GetWeatherComponent().IsIndoorEnvironment()) return false;
+                return true;
+            }
+            return false;
+        }
+
+        public static float lastsavetime = 0;
+        public static void Save(bool allowed = true)
+        {
+            if (allowed)
+            {
+                GameManager.TriggerSurvivalSaveAndDisplayHUDMessage();
+            }
+        }
         void AttemptPeriodicAutosave()
         {
             if(Settings.options.EnableMod && Settings.options.TimeSave)
             {
-                if (saveperiod == 0) UpdateSavePeriod();
-                lastsavetime += Time.deltaTime;
+                if (Settings.options.xinTimeSave && GameManager.GetWeatherComponent() != null && GameManager.GetWeatherComponent().IsIndoorEnvironment()) return;
                 if (lastsavetime > saveperiod) Save();
             }
         }
@@ -87,7 +112,7 @@ namespace More_Autosaves
 
         bool ShouldSaveGameonExitBuilding()
         {
-            if(Settings.options.EnableMod && Settings.options.ExitSave)
+            if(Settings.options.EnableMod && Settings.options.OutSave)
             {
                 if (GameManager.m_SceneTransitionData == null || GameManager.GetWeatherComponent() == null) return false;
                 return !GameManager.m_SceneTransitionData.m_TeleportPlayerSaveGamePosition && !GameManager.GetWeatherComponent().IsIndoorEnvironment() && GameManager.m_SceneTransitionData.m_SpawnPointName != null;
@@ -95,11 +120,51 @@ namespace More_Autosaves
             return false;
         }
 
-        static float lastsavetime = 0;
-        public static void Save()
+        static bool saveframe = false;
+        public static void SaveNextFrame()
         {
-            GameManager.TriggerSurvivalSaveAndDisplayHUDMessage();
-            lastsavetime = 0;
+            saveframe = true;
+        }
+
+        void CheckForSaveFrame()
+        {
+            if (saveframe)
+            {
+                saveframe = false;
+                Save();
+            }
+            
+        }
+
+        public static void SaveifAnimalnotFleeBanned(BaseAi animal)
+        {
+            bool AnimalIsBanned() 
+            {
+                if(Settings.options.FleeBanAnimals)
+                {
+                    if (Settings.options.FleeBanRabbits && animal.m_AiSubType == AiSubType.Rabbit) return true;
+                    if (Settings.options.FleeBanStags && animal.m_AiSubType == AiSubType.Stag) return true;
+                    if (Settings.options.FleeBanWolves && animal.m_AiSubType == AiSubType.Wolf) return true;
+                    if (Settings.options.FleeBanBears && animal.m_AiSubType == AiSubType.Bear) return true;
+                }
+                return false;
+            }
+            if(!AnimalIsBanned()) Save();
+        }
+
+        public static void SaveifAnimalnotAttackBanned(BaseAi animal)
+        {
+            bool AnimalIsBanned()
+            {
+                if (Settings.options.AttackBanAnimals)
+                {
+                    if (Settings.options.AttackBanWolves && animal.m_AiSubType == AiSubType.Wolf) return true;
+                    if (Settings.options.AttackBanBears && animal.m_AiSubType == AiSubType.Bear) return true;
+                    if (Settings.options.AttackBanMoose && animal.m_AiSubType == AiSubType.Moose) return true;
+                }
+                return false;
+            }
+            if (!AnimalIsBanned()) Save();
         }
 
         void HideSaveIcon()
@@ -107,63 +172,49 @@ namespace More_Autosaves
             if(Settings.options.EnableMod && Settings.options.HideIcon && InterfaceManager.m_Panel_SaveIcon != null) InterfaceManager.m_Panel_SaveIcon.Enable(false);
         }
 
-        BaseAi closestwolf = new BaseAi();
-        void Initializeclosestwolf()
+        public static bool Aware(BaseAi ai)
         {
-            if (BaseAiManager.s_ClosestAiToPlayer != null)
+            switch (ai.GetAiMode())
             {
-                closestwolf = BaseAiManager.s_ClosestAiToPlayer;
+                case AiMode.Attack:
+                case AiMode.PassingAttack:
+                case AiMode.Flee:
+                case AiMode.Stalking:
+                case AiMode.HoldGround:
+                    return true;
             }
+            return false;
         }
 
-        
-        bool lastaggressive = false;
-        void CheckforWolfStalk()
+        void CheckforQuickSave()
         {
-            Initializeclosestwolf();
-            if (Settings.options.EnableMod && Settings.options.StalkSave && closestwolf != null)
+            if (Settings.options.EnableMod && Settings.options.SurvivalQuickSave && InputManager.instance != null && !GameManager.IsStoryMode()) 
             {
-                bool aggressive = closestwolf.CurrentAiModeAllowsHoldGround();
-                if (aggressive && !lastaggressive) Save();
-                lastaggressive = aggressive;
-            }
+                if(InputManager.GetQuickSavePressed(InputManager.m_CurrentContext)) Save();
+                if (InputManager.GetQuickLoadPressed(InputManager.m_CurrentContext)) GameManager.LoadActiveSaveGame();
+            } 
         }
 
-
-
-        bool OnLoadHasBeenCalled = false;
-        void CheckforOnStart()
-        {
-            void OnStart()
+        public static bool CanExitSave = false;
+        void CheckforExitSave() 
+        { if (Settings.options.EnableMod && Settings.options.ExitSave && CanExitSave && lastsavetime==0) 
             {
-                if(Settings.options.EnableMod && Settings.options.StalkSave)
-                {
-                    Initializeclosestwolf();
-                    if(closestwolf != null)
-                    {
-                        closestwolf.MaybeForceStalkPlayer();
-                        //closestwolf.ForceSetPlayerTarget();
-                        //closestwolf.SetAiMode(AiMode.Stalking);
-                    }
-
-                }
-            }
-
-            if (!OnLoadHasBeenCalled && GameManager.GetPlayerManagerComponent() != null)
-            {
-                OnStart();
-                OnLoadHasBeenCalled = true;
-            }
+                CanExitSave = false;
+                GameManager.GetLogComponent().WriteLogToFile();
+                GameManager.LoadMainMenu();
+            } 
         }
 
         public override void OnUpdate()
         {
+            lastsavetime += Time.deltaTime;
+            CheckforExitSave();
+            CheckforQuickSave();
+            UpdateforDelaySeconds();
+            CheckForSaveFrame();
             HideSaveIcon();
-            //CheckforBleed();
-            CheckforOnStart();
             AttemptPeriodicAutosave();
             CheckforBlizzards();
-            CheckforWolfStalk();
             SaveifTriggerAllowed();
         }
 
