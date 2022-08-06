@@ -17,6 +17,9 @@ There's a periodic save option to save every once in a while.
 There's an option to save when a blizzard starts.
 There are options for triggering saves when you wound an animal, a predator starts pursuing you, or specific animals become aware of you.
 
+## Special Thanks
+Scavenger for mod ideas and playtesting.
+
 ## Changelog
 ### 1.1.0
  - larger range of periodic save seconds slider
