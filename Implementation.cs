@@ -67,7 +67,7 @@ namespace More_Autosaves
         {
             if (allowed)
             {
-                GameManager.TriggerSurvivalSaveAndDisplayHUDMessage();
+                GameManager.SaveGameAndDisplayHUDMessage();
             }
         }
         void AttemptPeriodicAutosave()
