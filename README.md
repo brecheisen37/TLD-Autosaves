@@ -21,6 +21,10 @@ There are options for triggering saves when you wound an animal, a predator star
 Scavenger for mod ideas and playtesting.
 
 ## Changelog
+
+### 1.2.0
+ - mod now works properly in wintermute
+
 ### 1.1.0
  - larger range of periodic save seconds slider
  - rewrote only outside options for periodic saves and exit saves
